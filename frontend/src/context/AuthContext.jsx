@@ -37,16 +37,21 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.login({ email, password });
       if (response.data.success) {
-        const { user, token } = response.data.data;
-        localStorage.setItem('token', token);
-        setUser(user);
+        const token = response.data.token || response.data.data?.token;
+        const user = response.data.user || response.data.data?.user;
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+        if (user) {
+          setUser(user);
+        }
         setIsAuthenticated(true);
-        return { success: true };
+        return token ? { success: true } : { success: false, message: 'Login response did not include token' };
       }
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Login failed'
+        message: error.response?.data?.message || error.response?.data?.error || 'Login failed'
       };
     }
   };
@@ -55,16 +60,21 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authAPI.register(userData);
       if (response.data.success) {
-        const { user, token } = response.data.data;
-        localStorage.setItem('token', token);
-        setUser(user);
+        const token = response.data.token || response.data.data?.token;
+        const user = response.data.user || response.data.data?.user;
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+        if (user) {
+          setUser(user);
+        }
         setIsAuthenticated(true);
-        return { success: true };
+        return token ? { success: true } : { success: false, message: 'Registration response did not include token' };
       }
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Registration failed'
+        message: error.response?.data?.message || error.response?.data?.error || 'Registration failed'
       };
     }
   };
