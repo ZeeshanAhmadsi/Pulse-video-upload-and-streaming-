@@ -40,38 +40,39 @@ app.locals.io = io;
 // Connect to database
 connectDB();
 
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 // CORS Configuration
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, Postman, or curl)
-    if (!origin && NODE_ENV === 'development') {
+    const allowedOrigins = CORS_ORIGIN === '*' 
+      ? ['*'] 
+      : CORS_ORIGIN.split(',').map(o => o.trim());
+
+    // 1. Allow if no origin (Like mobile apps, some browser requests, or Postman)
+    if (!origin) {
       return callback(null, true);
     }
 
-    // If CORS_ORIGIN is '*', allow all origins
-    if (CORS_ORIGIN === '*') {
-      return callback(null, true);
-    }
-
-    // Check if origin is in allowed list
-    const allowedOrigins = CORS_ORIGIN.split(',').map(o => o.trim());
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+    // 2. Allow if origin is in the list or if list is '*'
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`CORS Blocked for origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: CORS_CREDENTIALS,
+  credentials: true, // Set this explicitly to true
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'Accept-Ranges']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200 
 };
 
 // Middleware
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.options('*', cors(corsOptions));
+
 
 
 // Routes
