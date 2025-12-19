@@ -82,7 +82,7 @@ app.get('/api/health', (req, res) => {
 // Import error handler
 const { errorHandler, notFound } = require('./middlewares/errorHandler.middleware');
 
-app.get("/", (req, res) => {
+app.all("/", (req, res) => {
   res.json({ message: "Pulse backend is running 🚀" });
 });
 
