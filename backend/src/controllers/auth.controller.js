@@ -91,48 +91,85 @@ const register = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Login user
+// @desc    Authenticate user & get token
 // @route   POST /api/auth/login
 // @access  Public
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
+  // Log the incoming request for debugging
+  console.log('Login request received for email:', email);
+  console.log('Request origin:', req.get('origin'));
+  console.log('Request headers:', req.headers);
+
   // Validate input
   if (!email || !password) {
+    console.error('Validation failed - missing email or password');
     throw new ValidationError('Please provide email and password', {
       email: !email ? 'Email is required' : undefined,
       password: !password ? 'Password is required' : undefined
     });
   }
 
-  // Find user and include password for comparison
-  const user = await User.findOne({ email }).select('+password');
-  if (!user) {
-    throw new UnauthorizedError('Invalid credentials');
-  }
+  try {
+    // Check for user
+    const user = await User.findOne({ email }).select('+password');
+    console.log('User found:', user ? 'Yes' : 'No');
 
-  // Check password
-  const isPasswordValid = await user.comparePassword(password);
-  if (!isPasswordValid) {
-    throw new UnauthorizedError('Invalid credentials');
-  }
+    if (!user) {
+      console.error('Login failed - user not found:', email);
+      throw new UnauthorizedError('Invalid email or password');
+    }
 
-  // Generate token
-  const token = generateToken(user._id.toString(), user.role, user.tenantId);
+    // Check if password matches
+    const isMatch = await user.matchPassword(password);
+    console.log('Password match:', isMatch ? 'Yes' : 'No');
 
-  res.status(200).json({
-    success: true,
-    message: 'Login successful',
-    data: {
+    if (!isMatch) {
+      console.error('Login failed - invalid password for user:', email);
+      throw new UnauthorizedError('Invalid email or password');
+    }
+
+    // Generate tokens
+    const token = generateToken(user._id, user.role, user.tenantId);
+    const refreshToken = generateRefreshToken(user._id, user.role, user.tenantId);
+    console.log('Tokens generated successfully');
+
+    // Prepare response data
+    const responseData = {
+      success: true,
+      token,
+      refreshToken,
       user: {
         id: user._id,
+        name: user.name,
         email: user.email,
         role: user.role,
         tenantId: user.tenantId
-      },
-      token
-    }
-  });
+      }
+    };
+
+    // Set secure cookie with token
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Use secure in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      domain: process.env.NODE_ENV === 'production' ? '.pulsevideouploadandstreaming.vercel.app' : undefined
+    });
+
+    // Set CORS headers
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+
+    console.log('Sending successful login response');
+    return res.status(200).json(responseData);
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error; // This will be caught by the error handler middleware
+  }
 });
 
 // @desc    Get current user

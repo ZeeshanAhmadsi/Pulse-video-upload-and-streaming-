@@ -7,8 +7,10 @@ module.exports = {
   JWT_EXPIRE: process.env.JWT_EXPIRE || '7d',
   JWT_REFRESH_EXPIRE: process.env.JWT_REFRESH_EXPIRE || '30d', // Optional: for refresh tokens
   NODE_ENV: process.env.NODE_ENV || 'development',
-  // CORS configuration
-  CORS_ORIGIN: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? '' : '*'),
+  // CORS configuration - Default to allow Vercel and local development
+  CORS_ORIGIN: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' 
+    ? 'https://pulsevideouploadandstreaming.vercel.app' 
+    : 'http://localhost:3000,http://localhost:5173'),
   CORS_CREDENTIALS: process.env.CORS_CREDENTIALS === 'true' || false,
   // Password hashing
   BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10,

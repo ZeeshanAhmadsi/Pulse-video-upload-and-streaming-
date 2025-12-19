@@ -43,33 +43,55 @@ connectDB();
 // CORS Configuration
 const corsOptions = {
   origin: (origin, callback) => {
+    if (!CORS_ORIGIN) {
+      return callback(new Error('CORS_ORIGIN is not configured'));
+    }
+
     const allowedOrigins = CORS_ORIGIN === '*' 
       ? ['*'] 
       : CORS_ORIGIN.split(',').map(o => o.trim());
 
-    // 1. Allow if no origin (Like mobile apps, some browser requests, or Postman)
+    // 1. Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
+      console.warn('Request with no origin - allowing but this should be reviewed');
       return callback(null, true);
     }
 
-    // 2. Allow if origin is in the list or if list is '*'
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.error(`CORS Blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+    // 2. Allow if origin is in the allowed list or if list is '*'
+    if (allowedOrigins.includes('*') || allowedOrigins.some(allowedOrigin => {
+      return origin === allowedOrigin || 
+             origin.startsWith(allowedOrigin.replace('https://', 'http://'));
+    })) {
+      return callback(null, true);
     }
+
+    console.error(`CORS Blocked for origin: ${origin}. Allowed origins: ${CORS_ORIGIN}`);
+    return callback(new Error('Not allowed by CORS'));
   },
-  credentials: true, // Set this explicitly to true
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  optionsSuccessStatus: 200 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'Accept',
+    'Origin',
+    'Access-Control-Allow-Credentials'
+  ],
+  exposedHeaders: [
+    'Content-Range',
+    'X-Content-Range',
+    'Access-Control-Allow-Credentials'
+  ],
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 };
 
 // Middleware
+app.options('*', cors(corsOptions)); // Enable preflight for all routes
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 
 
