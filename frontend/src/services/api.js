@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pulse-video-upload-and-streaming.onrender.com';
+let API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pulse-video-upload-and-streaming.onrender.com';
+
+// Normalize base URL so we don't end up with /api/api/... if env already contains /api
+API_BASE_URL = API_BASE_URL.replace(/\/+$/, '');
+API_BASE_URL = API_BASE_URL.replace(/\/api$/, '');
 
 // Create axios instance with default config
 const api = axios.create({
