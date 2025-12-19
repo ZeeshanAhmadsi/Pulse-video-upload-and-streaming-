@@ -84,9 +84,12 @@ const asyncHandler = (fn) => {
  * Not found handler
  */
 const notFound = (req, res, next) => {
-  const error = new AppError(`Route ${req.originalUrl} not found`, 404);
-  next(error);
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
+  });
 };
+
 
 module.exports = {
   errorHandler,
