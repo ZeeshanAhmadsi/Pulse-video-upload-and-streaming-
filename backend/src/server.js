@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors');
 const connectDB = require('./config/db');
 const { PORT, CORS_ORIGIN, CORS_CREDENTIALS, NODE_ENV } = require('./config/env');
 const { initializeProgressSocket } = require('./sockets/progress.socket');
@@ -40,48 +39,13 @@ app.locals.io = io;
 // Connect to database
 connectDB();
 
- // Allowed origins (CORS)
- const allowedOrigins = [
-   'https://pulsevideouploadandstreaming.vercel.app',
-   'http://localhost:3000',
-   'http://localhost:5173'
- ];
-
-// CORS Configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Credentials'
-  ],
-  exposedHeaders: [
-    'Content-Range',
-    'X-Content-Range',
-    'Access-Control-Allow-Credentials',
-    'Access-Control-Allow-Origin'
-  ],
-  optionsSuccessStatus: 200,
-  preflightContinue: false
-};
-
-// Handle preflight for all routes
-app.options('*', cors(corsOptions));
-
 // Middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  if (allowedOrigins.includes(origin)) {
+  if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
+    res.header('Vary', 'Origin');
   }
 
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
@@ -94,8 +58,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-app.use(cors(corsOptions)); // Enable preflight for all routes
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
