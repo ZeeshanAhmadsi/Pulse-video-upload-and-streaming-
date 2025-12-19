@@ -42,6 +42,7 @@ connectDB();
 // Middleware
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  const reqAllowedHeaders = req.headers['access-control-request-headers'];
 
   if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
@@ -49,7 +50,10 @@ app.use((req, res, next) => {
   }
 
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-auth-token');
+  res.header(
+    'Access-Control-Allow-Headers',
+    reqAllowedHeaders || 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-auth-token'
+  );
   res.header('Access-Control-Allow-Credentials', 'true');
 
   if (req.method === 'OPTIONS') {
@@ -70,7 +74,8 @@ app.use('/api/users', userRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Server is running'
+    message: 'Server is running',
+    version: process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || 'unknown'
   });
 });
 
