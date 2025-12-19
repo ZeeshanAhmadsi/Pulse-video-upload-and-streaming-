@@ -71,6 +71,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.options('*', cors(corsOptions));
+
 
 // Routes
 app.use('/api/auth', authRoutes);
