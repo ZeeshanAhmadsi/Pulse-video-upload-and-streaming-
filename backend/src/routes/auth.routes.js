@@ -14,7 +14,9 @@ const corsOptions = {
 };
 
 // Handle OPTIONS for all routes
-router.options('*', cors(corsOptions));
+router.options('/register', cors(corsOptions));
+router.options('/login', cors(corsOptions));
+router.options('/me', cors(corsOptions));
 
 // Public routes
 router.post('/register', cors(corsOptions), register);
