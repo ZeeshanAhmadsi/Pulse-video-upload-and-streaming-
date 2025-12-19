@@ -33,10 +33,10 @@ export const authAPI = {
 
 // Video API
 export const videoAPI = {
-  getAll: (params) => api.get('/videos', { params }),
-  getById: (id) => api.get(`/videos/${id}`),
+  getAll: (params) => api.get('/api/videos', { params }),
+  getById: (id) => api.get(`/api/videos/${id}`),
   upload: (formData, onUploadProgress) => {
-    return api.post('/videos/upload', formData, {
+    return api.post('/api/videos/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
@@ -50,17 +50,17 @@ export const videoAPI = {
       }
     });
   },
-  update: (id, data) => api.put(`/videos/${id}`, data),
-  delete: (id) => api.delete(`/videos/${id}`),
-  stream: (videoId) => `${API_BASE_URL}/videos/stream/${videoId}`
+  update: (id, data) => api.put(`/api/videos/${id}`, data),
+  delete: (id) => api.delete(`/api/videos/${id}`),
+  stream: (videoId) => `${API_BASE_URL}/api/videos/stream/${videoId}`
 };
 
 // User API (Admin only)
 export const userAPI = {
-  getAll: () => api.get('/users'),
-  getById: (id) => api.get(`/users/${id}`),
-  update: (id, data) => api.put(`/users/${id}`, data),
-  delete: (id) => api.delete(`/users/${id}`)
+  getAll: () => api.get('/api/users'),
+  getById: (id) => api.get(`/api/users/${id}`),
+  update: (id, data) => api.put(`/api/users/${id}`, data),
+  delete: (id) => api.delete(`/api/users/${id}`)
 };
 
 export default api;
