@@ -40,23 +40,16 @@ app.locals.io = io;
 // Connect to database
 connectDB();
 
+ // Allowed origins (CORS)
+ const allowedOrigins = [
+   'https://pulsevideouploadandstreaming.vercel.app',
+   'http://localhost:3000',
+   'http://localhost:5173'
+ ];
+
 // CORS Configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'https://pulsevideouploadandstreaming.vercel.app',
-      'http://localhost:3000',
-      'http://localhost:5173'
-    ];
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `CORS policy does not allow ${origin}`;
-      console.error(msg);
-      return callback(new Error(msg), false);
-    }
     return callback(null, true);
   },
   credentials: true,
@@ -84,34 +77,27 @@ const corsOptions = {
 app.options('*', cors(corsOptions));
 
 // Middleware
-app.use(cors(corsOptions)); // Enable preflight for all routes
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// Add CORS headers to all responses
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'https://pulsevideouploadandstreaming.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ];
-  
+
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
   }
-  
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-auth-token');
   res.header('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle preflight requests
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   next();
 });
+
+app.use(cors(corsOptions)); // Enable preflight for all routes
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Routes
 app.use('/api/auth', authRoutes);

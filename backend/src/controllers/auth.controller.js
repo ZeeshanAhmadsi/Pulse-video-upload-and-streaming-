@@ -95,25 +95,6 @@ const register = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const login = asyncHandler(async (req, res) => {
-  // Set CORS headers
-  const origin = req.headers.origin;
-  const allowedOrigins = [
-    'https://pulsevideouploadandstreaming.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ];
-  
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
   const { email, password } = req.body;
   console.log('Login attempt for:', email);
 
@@ -179,15 +160,8 @@ const login = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Use secure in production
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      domain: process.env.NODE_ENV === 'production' ? '.pulsevideouploadandstreaming.vercel.app' : undefined
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
-
-    // Set CORS headers
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 
     console.log('Sending successful login response');
     return res.status(200).json(responseData);

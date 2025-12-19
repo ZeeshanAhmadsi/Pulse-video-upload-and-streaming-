@@ -6,11 +6,7 @@ const authenticate = require('../middlewares/auth.middleware');
 
 // CORS configuration for auth routes
 const corsOptions = {
-  origin: [
-    'https://pulsevideouploadandstreaming.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ],
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
