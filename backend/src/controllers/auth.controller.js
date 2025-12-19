@@ -95,19 +95,38 @@ const register = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  // Set CORS headers
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://pulsevideouploadandstreaming.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-  // Log the incoming request for debugging
-  console.log('Login request received for email:', email);
-  console.log('Request origin:', req.get('origin'));
-  console.log('Request headers:', req.headers);
+  const { email, password } = req.body;
+  console.log('Login attempt for:', email);
 
   // Validate input
   if (!email || !password) {
     console.error('Validation failed - missing email or password');
-    throw new ValidationError('Please provide email and password', {
-      email: !email ? 'Email is required' : undefined,
-      password: !password ? 'Password is required' : undefined
+    return res.status(400).json({
+      success: false,
+      error: 'Email and password are required',
+      details: {
+        email: !email ? 'Email is required' : undefined,
+        password: !password ? 'Password is required' : undefined
+      }
     });
   }
 
@@ -118,7 +137,10 @@ const login = asyncHandler(async (req, res) => {
 
     if (!user) {
       console.error('Login failed - user not found:', email);
-      throw new UnauthorizedError('Invalid email or password');
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid email or password'
+      });
     }
 
     // Check if password matches
@@ -127,7 +149,10 @@ const login = asyncHandler(async (req, res) => {
 
     if (!isMatch) {
       console.error('Login failed - invalid password for user:', email);
-      throw new UnauthorizedError('Invalid email or password');
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid email or password'
+      });
     }
 
     // Generate tokens

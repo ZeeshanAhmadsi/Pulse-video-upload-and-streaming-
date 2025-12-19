@@ -42,58 +42,76 @@ connectDB();
 
 // CORS Configuration
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!CORS_ORIGIN) {
-      return callback(new Error('CORS_ORIGIN is not configured'));
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://pulsevideouploadandstreaming.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `CORS policy does not allow ${origin}`;
+      console.error(msg);
+      return callback(new Error(msg), false);
     }
-
-    const allowedOrigins = CORS_ORIGIN === '*' 
-      ? ['*'] 
-      : CORS_ORIGIN.split(',').map(o => o.trim());
-
-    // 1. Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      console.warn('Request with no origin - allowing but this should be reviewed');
-      return callback(null, true);
-    }
-
-    // 2. Allow if origin is in the allowed list or if list is '*'
-    if (allowedOrigins.includes('*') || allowedOrigins.some(allowedOrigin => {
-      return origin === allowedOrigin || 
-             origin.startsWith(allowedOrigin.replace('https://', 'http://'));
-    })) {
-      return callback(null, true);
-    }
-
-    console.error(`CORS Blocked for origin: ${origin}. Allowed origins: ${CORS_ORIGIN}`);
-    return callback(new Error('Not allowed by CORS'));
+    return callback(null, true);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
   allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
     'Accept',
     'Origin',
+    'Access-Control-Allow-Origin',
     'Access-Control-Allow-Credentials'
   ],
   exposedHeaders: [
     'Content-Range',
     'X-Content-Range',
-    'Access-Control-Allow-Credentials'
+    'Access-Control-Allow-Credentials',
+    'Access-Control-Allow-Origin'
   ],
   optionsSuccessStatus: 200,
   preflightContinue: false
 };
 
+// Handle preflight for all routes
+app.options('*', cors(corsOptions));
+
 // Middleware
-app.options('*', cors(corsOptions)); // Enable preflight for all routes
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); // Enable preflight for all routes
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-
+// Add CORS headers to all responses
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://pulsevideouploadandstreaming.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ];
+  
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-auth-token');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
